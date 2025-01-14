@@ -5,15 +5,36 @@ PASTA_ATUAL = Path(__file__).parent
 PASTA_TEMPLATES = PASTA_ATUAL / 'templates'
 PASTA_LISTA_EMAILS = PASTA_ATUAL / 'lista_email'
 
-
-if not 'pagina_central_email' in st.session_state:
-  st.session_state.pagina_central_email = 'home'
+def inicializacao():
+  if not 'pagina_central_email' in st.session_state:
+    st.session_state.pagina_central_email = 'home'
+  if not 'destinatarios_atual' in st.session_state:
+    st.session_state.destinatarios_atual = ''
+  if not 'titulo_atual' in st.session_state:
+    st.session_state.titulo_atual = ''
+  if not 'corpo_atual' in st.session_state:
+    st.session_state.corpo_atual = ''
 
 def mudar_pagina(nome_pagina):
   st.session_state.pagina_central_email = nome_pagina
 
+# ================= HOME ===================================
 def home():
+  destinatarios_atual = st.session_state.destinatarios_atual
+  titulo_atual = st.session_state.titulo_atual
+  corpo_atual = st.session_state.corpo_atual
+
   st.markdown('# Central de Emails')
+  destinatarios = st.text_input('Destinatários do email:', value=destinatarios_atual)
+  titulo = st.text_input('Título do email:', value=titulo_atual)
+  corpo = st.text_area('Digite email:', value=corpo_atual, height=400 )
+  col1, col2, col3 = st.columns(3)
+  col1.button('Enviar email', use_container_width=True)
+  col3.button('Enviar', use_container_width=True)
+
+  st.session_state.destinatarios_atual = destinatarios
+  st.session_state.titulo_atual = titulo
+  st.session_state.corpo_atual = corpo
 
 def pag_templates():
   st.markdown('# Templates')
@@ -111,6 +132,8 @@ def pag_configuracao():
   st.markdown('# Configurações')
 
 def main():
+  inicializacao()
+
   st.sidebar.button('Central de Emails', use_container_width=True, on_click=mudar_pagina, args=('home',))
   st.sidebar.button('Templates', use_container_width=True, on_click=mudar_pagina, args=('templates',))
   st.sidebar.button('Lista de Emails', use_container_width=True, on_click=mudar_pagina, args=('lista_emails',))
@@ -118,33 +141,33 @@ def main():
 
 
 
-if st.session_state.pagina_central_email == 'home':
-  home()
+  if st.session_state.pagina_central_email == 'home':
+    home()
 
-elif st.session_state.pagina_central_email == 'templates':
-  pag_templates()
+  elif st.session_state.pagina_central_email == 'templates':
+    pag_templates()
 
-elif st.session_state.pagina_central_email == 'adicionar_novo_template':
-  pag_adicionar_novo_template()
+  elif st.session_state.pagina_central_email == 'adicionar_novo_template':
+    pag_adicionar_novo_template()
 
-elif st.session_state.pagina_central_email == 'editar_template':
-  nome_template_editar = st.session_state.nome_template_editar
-  texto_template_editar = st.session_state.texto_template_editar
-  pag_adicionar_novo_template(nome_template_editar, texto_template_editar)
+  elif st.session_state.pagina_central_email == 'editar_template':
+    nome_template_editar = st.session_state.nome_template_editar
+    texto_template_editar = st.session_state.texto_template_editar
+    pag_adicionar_novo_template(nome_template_editar, texto_template_editar)
 
-elif st.session_state.pagina_central_email == 'lista_emails':
-  pag_lista_emails()
+  elif st.session_state.pagina_central_email == 'lista_emails':
+    pag_lista_emails()
 
-elif st.session_state.pagina_central_email == 'adicionar_nova_lista':
-  pag_adicionar_nova_lista()
+  elif st.session_state.pagina_central_email == 'adicionar_nova_lista':
+    pag_adicionar_nova_lista()
 
-elif st.session_state.pagina_central_email == 'editar_lista':
-  nome_lista = st.session_state.nome_lista_editar
-  texto_lista= st.session_state.texto_lista_editar
-  pag_adicionar_nova_lista(nome_lista, texto_lista)
+  elif st.session_state.pagina_central_email == 'editar_lista':
+    nome_lista = st.session_state.nome_lista_editar
+    texto_lista= st.session_state.texto_lista_editar
+    pag_adicionar_nova_lista(nome_lista, texto_lista)
 
-elif st.session_state.pagina_central_email == 'configuracao':
-  pag_configuracao()
+  elif st.session_state.pagina_central_email == 'configuracao':
+    pag_configuracao()
 
 
 main()
