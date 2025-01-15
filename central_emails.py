@@ -1,25 +1,10 @@
 from pathlib import Path
 import streamlit as st
 
-from utilidades import envia_email
-
-PASTA_ATUAL = Path(__file__).parent
-PASTA_TEMPLATES = PASTA_ATUAL / 'templates'
-PASTA_LISTA_EMAILS = PASTA_ATUAL / 'lista_email'
-PASTA_CONFIGURACOES = PASTA_ATUAL / 'configuracoes'
-
-def inicializacao():
-  if not 'pagina_central_email' in st.session_state:
-    st.session_state.pagina_central_email = 'home'
-  if not 'destinatarios_atual' in st.session_state:
-    st.session_state.destinatarios_atual = ''
-  if not 'titulo_atual' in st.session_state:
-    st.session_state.titulo_atual = ''
-  if not 'corpo_atual' in st.session_state:
-    st.session_state.corpo_atual = ''
-
-def mudar_pagina(nome_pagina):
-  st.session_state.pagina_central_email = nome_pagina
+from utilidades import *
+from pagina_template import *
+from pagina_lista_emails import *
+from pagina_configuracoes import *
 
 # ================= HOME ===================================
 def home():
@@ -49,8 +34,8 @@ def _limpar():
 
 def _enviar_email(destinatarios, titulo, corpo):
   destinatarios = destinatarios.replace(' ', '').split(',')
-  email_usuario = _le_email_usuario()
-  chave = _le_chave_usuario()
+  email_usuario = le_email_usuario()
+  chave = le_chave_usuario()
   if email_usuario == '':
     st.error('Adicione um email na página de configurações')
   elif chave == '':
@@ -62,156 +47,7 @@ def _enviar_email(destinatarios, titulo, corpo):
               corpo=corpo,
               senha_app=chave)
 
-def pag_templates():
-  st.markdown('# Templates')
-  st.divider()
-  for arquivo in PASTA_TEMPLATES.glob('*.txt'):
-    nome_arquivo = arquivo.stem.replace('_', ' ').upper()
-    col1, col2, col3 = st.columns([0.6, 0.2, 0.2])
-    col1.button(nome_arquivo, key=f'{nome_arquivo}', 
-                          use_container_width=True,
-                          on_click=_usar_template,
-                          args=(nome_arquivo, ))
-    col2.button('EDITAR', key=f'editar_{nome_arquivo}', 
-                          use_container_width=True,
-                          on_click=_editar_arquivo,
-                          args=(nome_arquivo,))
-    col3.button('REMOVER', key=f'remover_{nome_arquivo}', 
-                            use_container_width=True, 
-                            on_click=_remove_template, 
-                            args=(nome_arquivo, ))
-  st.divider()
-  st.button('Adicionar Template', on_click=mudar_pagina, args=('adicionar_novo_template',))
-
-def pag_adicionar_novo_template(nome_template='', texto_template=''):
-  nome_template = st.text_input('Nome do template:', value=nome_template)
-  texto_template = st.text_area('Escreva o texto do template', value=texto_template, height=600)
-  st.button('Salvar', on_click= salvar_template, args=(nome_template, texto_template))
-  
-def _usar_template(nome):
-  nome_arquivo = nome.replace(' ', '_').lower() + '.txt'
-  with open(PASTA_TEMPLATES / nome_arquivo) as f:
-      texto_arquivo = f.read()
-  st.session_state.corpo_atual = texto_arquivo
-  mudar_pagina('home')
-
-def salvar_template(nome, texto):
-  PASTA_TEMPLATES.mkdir(exist_ok=True)
-  nome_arquivo = nome.replace(' ', '_').lower() + '.txt'
-  with open(PASTA_TEMPLATES / nome_arquivo, 'w') as f:
-    f.write(texto)
-    mudar_pagina('templates')
-
-def _remove_template(nome):
-  nome_arquivo = nome.replace(' ', '_').lower() + '.txt'
-  (PASTA_TEMPLATES / nome_arquivo).unlink()
-
-
-def _editar_arquivo(nome):
-  nome_arquivo = nome.replace(' ', '_').lower() + '.txt'
-  with open(PASTA_TEMPLATES / nome_arquivo) as f:
-      texto_arquivo = f.read()
-  st.session_state.nome_template_editar = nome
-  st.session_state.texto_template_editar = texto_arquivo
-  mudar_pagina('editar_template')
-
-# ================ LISTAS DE EMAILS =================== 
-def pag_lista_emails():
-  st.markdown('# Lista Email')
-  st.divider()
-  for arquivo in PASTA_LISTA_EMAILS.glob('*.txt'):
-    nome_arquivo = arquivo.stem.replace('_', ' ').upper()
-    col1, col2, col3 = st.columns([0.6, 0.2, 0.2])
-    col1.button(nome_arquivo, key=f'{nome_arquivo}',
-                              use_container_width=True,
-                              on_click=_usa_lista,
-                              args=(nome_arquivo, ))
-    col2.button('EDITAR', key=f'editar_{nome_arquivo}', 
-                          use_container_width=True,
-                          on_click=_editar_lista,
-                          args=(nome_arquivo,))
-    col3.button('REMOVER', key=f'remover_{nome_arquivo}',
-                              use_container_width=True,
-                              on_click=_remove_lista,
-                              args=(nome_arquivo, ))
-    
-  st.divider()
-  st.button('Adicionar Lista',on_click=mudar_pagina, args=('adicionar_nova_lista',))
-
-def pag_adicionar_nova_lista(nome_lista='', emails_lista=''):
-  nome_lista = st.text_input('Nome da lista:', value=nome_lista)
-  emails_lista = st.text_area('Escreva os emails separados por vírgula:', value=emails_lista, height=600)
-  st.button('Salvar', on_click= _salvar_lista, args=(nome_lista, emails_lista))
-
-def _usa_lista(nome):
-  nome_arquivo = nome.replace(' ', '_').lower() + '.txt'
-  with open(PASTA_LISTA_EMAILS / nome_arquivo) as f:
-    texto_arquivo = f.read()
-  st.session_state.destinatarios_atual = texto_arquivo
-  mudar_pagina('home')
-
-
-def _salvar_lista(nome, texto):
-  PASTA_LISTA_EMAILS.mkdir(exist_ok=True)
-  nome_arquivo = nome.replace(' ', '_').lower() + '.txt'
-  with open(PASTA_LISTA_EMAILS / nome_arquivo, 'w') as f:
-    f.write(texto)
-    mudar_pagina('lista_emails')
-
-def _remove_lista(nome):
-  nome_arquivo = nome.replace(' ', '_').lower() + '.txt'
-  (PASTA_LISTA_EMAILS / nome_arquivo).unlink()
-
-
-def _editar_lista(nome):
-  nome_arquivo = nome.replace(' ', '_').lower() + '.txt'
-  with open(PASTA_LISTA_EMAILS / nome_arquivo) as f:
-    texto_arquivo = f.read()
-  st.session_state.nome_lista_editar = nome
-  st.session_state.texto_lista_editar = texto_arquivo
-  mudar_pagina('editar_lista')
-
-
-# =================== PÁGINA DE CONFIGURAÇÕES =================
-def pag_configuracao():
-  st.markdown('# Configurações')
-  email = st.text_input('Digite seu email:')
-  st.button('Salvar', key='salvar_email', 
-                      on_click=_salvar_email,
-                      args=(email, ))
-  chave = st.text_input('Digite sua chave de email:')
-  st.button('Salvar', key='salvar_chave',
-                      on_click=_salvar_chave,
-                      args=(chave, ))
-
-def _salvar_email(email):
-  PASTA_CONFIGURACOES.mkdir(exist_ok=True)
-  with open(PASTA_CONFIGURACOES / 'email_usuario.txt', 'w') as f:
-    f.write(email)
-
-
-def _salvar_chave(chave):
-  PASTA_CONFIGURACOES.mkdir(exist_ok=True)
-  with open(PASTA_CONFIGURACOES / 'chave.txt', 'w') as f:
-    f.write(chave)
-
-def _le_email_usuario():
-  PASTA_CONFIGURACOES.mkdir(exist_ok=True)
-  if (PASTA_CONFIGURACOES / 'email_usuario.txt').exists():
-     with open(PASTA_CONFIGURACOES / 'email_usuario.txt', 'r') as f:
-        return f.read()
-  return ''
-
-def _le_chave_usuario():
-  PASTA_CONFIGURACOES.mkdir(exist_ok=True)
-  if (PASTA_CONFIGURACOES / 'chave.txt').exists():
-     with open(PASTA_CONFIGURACOES / 'chave.txt', 'r') as f:
-        return f.read()
-  return ''
-
-
-
-
+# ======= MAIN =================================================
 def main():
   inicializacao()
 
@@ -250,5 +86,5 @@ def main():
   elif st.session_state.pagina_central_email == 'configuracao':
     pag_configuracao()
 
-
-main()
+if __name__ == '__main__':
+  main()
